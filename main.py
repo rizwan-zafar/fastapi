@@ -1,6 +1,6 @@
 # main.py
 from fastapi import FastAPI
-
+import httpx
 app = FastAPI()
 
 @app.get("/")
@@ -8,13 +8,14 @@ def read_root():
     return {"message": "Hello, World!"}
 
 @app.get("/countries")
-def get_countries():
-    countries = [
-        "United States", "Canada", "Australia", "United Kingdom", "India",
-        "Germany", "France", "Japan", "China", "Brazil", "Pakistan", "Bangladesh",
-        "Saudi Arabia", "UAE", "Russia", "South Africa", "Mexico", "Italy",
-        "Spain", "Turkey", "Indonesia", "Argentina"
-    ]
-     # Convert to list of objects
-    country_list = [{"name": country} for country in countries]
-    return {"countries": country_list}
+async def get_countries():
+    url = "https://restcountries.com/v3.1/independent?status=true"
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        data = response.json()
+    
+    # Extract only the "common" country names
+    countries = [{"name": country["name"]["common"]} for country in data if "name" in country and "common" in country["name"]]
+
+    return {"countries": countries}
